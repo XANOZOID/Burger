@@ -7,6 +7,6 @@ Reason I say it's designed for me is because there's a lot to not like about it 
 2. It's entirely procedural 
 3. There are no first class functions or "classes with methods"
 4. Anything that does require dynamic-ish behavior is done through events which are not like scripts and have no returns
-    a. Events are defined statically too.
+    1. Events are defined statically too.
 5. It looks like JavaScript and Go had a baby
 
