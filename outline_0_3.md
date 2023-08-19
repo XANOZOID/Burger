@@ -7,9 +7,11 @@
 // added: semantics of main
 // added: lots of syntactic sugars
 
+
 // todo: Engine block
 // to consider: template strings
 // to consider: destructure syntax in args
+// to consider: array pattern matching
 
 // enums are collections of constant values
 // can be defined manually or let them define themselves in order as numbers
@@ -58,8 +60,8 @@ script a_script(a, b, c, x = 1, y = 2, z = 3, ...rest) {
     ];
 
     // There's also destructuring like you'd find in a language like JS
-    var [a, b, c] = [1, 2, 3];
-    var {a, b, c} = .{
+    var [a, b, c, d = 4 ] = [1, 2, 3];
+    var {a, b, c, d = "d" } = .{
         // we use "this" for the following since "a, b, c" are all in local scope now.
         this.a = 1;
         this.b = "b";
@@ -133,6 +135,22 @@ script a_script(a, b, c, x = 1, y = 2, z = 3, ...rest) {
     some_script(); // calls a script in the scope of "this"
     some_script(...some_array); // spread operator, like javascript
 
+
+    // sub scripts exist and can be used like a regular script except that their local
+    // scope is an extension of their parent script
+    sub inner_script(x, y = 1, ...z) {
+        // <logic here>
+        return x, y, z + x + y;
+    }
+
+    // nulls exist in the language too - so we have helps
+    var n = null;
+    var coalesce = n ?? "coalesced"; // null coalesce operator
+    
+    var obj = .{ x = .{ y = .{ z = true } } };
+    // there's a chance that some of the members of obj and a chain are null . . . so access it safely
+    z = obj?.x?.y?.z ?? false; // null chain accessors combined with the null coalesce operator
+
     // returns (you can return multiple statements)
     return a, b, c, x, y, z;
 }
@@ -142,10 +160,10 @@ script uses_a_script() {
     // you don't need to capture all the return values
     var v1, v2, v3, v4 = a_script();
     a_script("a", "b"); // all arguments are optional
-    // You can call a script with named arguments
+    // You can call a script with named arguments (where you can start without named args and end without named args but not in the middle)
     // IF YOU DO: the order of the arguments doesn't matter
         // however: after you've written the last named argument, only rest params may capture the args
-    a_script(b = 3, y = 4, x = 2, 1, 2, 3);
+    a_script(1, c = 3, y = 4, x = 2, 1, 2, 3);
     // last note: you can destructure the individual return values
     var v1, [v2, v3, v4], v5, v6 = a_script(); // <- example
 }
