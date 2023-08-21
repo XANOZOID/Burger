@@ -1,0 +1,5 @@
+script main() {
+	show("Hello world!");
+
+	var x = 10;
+}

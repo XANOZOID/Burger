@@ -1,0 +1,6 @@
+FileVersion = 1
+
+[Project]
+Name = "implementation"
+StartupObject = "burger.Program"
+DefaultNamespace = "burger"
