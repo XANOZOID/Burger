@@ -9,6 +9,20 @@ provide you with these semantics (since you can pass around scripts but only tha
 
 # Goals
 
+- simple but expressive
+- meant for making games
+- portable, with many supported targets
+- usable as a standalone language
+- can do server side programming with it too
+- concurrency and parallel programming without the hassle
+
+# More
+
+Please see [Outline 6 features](outline_0_6_refined.md) for syntax/semantics and [Outline 6 newest features](outline_0_6_newfeatures.md) for 
+the most impactful recent additions.
+
+# Supplemental (extension of Goals)
+
 Eventually, this language will be used for a 2d game engine. One of the goals in that case is to keep things simple enough to be 
 efficient, but equally expressive without breaking its primary goal (static invocations only). 
 
@@ -26,8 +40,3 @@ may just be provided to you as "client engine" and "server engine".
 Lastly, certain features were taken with care in this language. There are conditional compilations, there's script inlining, there's 
 meta tags, and there's engine blocks (for certain completion help). All of those things listed were taken with care to offer you a 
 seamless game development experience that hopefully simplifies the language and engine connection experience.
-
-# More
-
-To see an exhaustive outline of the language syntax/semantics with comments, read [Outline 4](outline_0_4.md). 
-Maybe something will surpise you!
