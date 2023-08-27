@@ -1,6 +1,6 @@
 # Burger : Burgerlang
 
-Burger is a basic c-style scripting language. 
+Burger is a basic concurrent c-style scripting language. 
 
 
 It's not very unique, in fact it takes from a lot of other c-style langs. The only thing it tries hard to do is prevent you from 
