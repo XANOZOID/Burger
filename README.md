@@ -5,7 +5,7 @@ Burger is a basic, concurrent, procedural, c-style scripting language meant for 
 
 It's not very unique, in fact it takes from a lot of other c-style langs. The only thing it tries hard to do is prevent you from 
 invoking something non-statically. If you want code to be passed around, for invoking dynamically, let whatever "host engine" you're using 
-provide you with these semantics (since you can pass around scripts but only that).
+provide you with these semantics.
 
 # Goals
 
