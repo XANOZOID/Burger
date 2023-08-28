@@ -6,9 +6,9 @@ enum TokenType {
 	TokenLeftBrace, TokenRightBrace,
 	TokenLeftBracket, TokenRightBracket,
 	TokenComma, TokenMinus, TokenPlus,
-	TokenSemiColon, TokenSlash, TokenStar,
+	TokenSemicolon, TokenSlash, TokenStar,
 
-	TokenColon,
+	TokenColon, TokenBar,
 	// 1-2 Character Tokens....
 	TokenBang, TokenBangEqual,
 	TokenEqual, TokenEqualEqual,
@@ -22,6 +22,7 @@ enum TokenType {
 
 	// Literals
 	TokenIdentifier, TokenString, TokenNumber,
+	TokenNew,
 
 	TokenSpreadRest,
 	// Keywords
@@ -30,10 +31,20 @@ enum TokenType {
 	TokenReturn, TokenThis,
 	TokenTrue, TokenVar, TokenWhile,
 
-	TokenTimes, TokenConst, TokenUnique, TokenLabel,
+	TokenConst, TokenUnique, TokenLabel,
 	TokenStatic, TokenSwitch, TokenBreak, TokenFallthrough,
-	TokenCase, TokenContinue, TokenIn, TokenDo, TokenUntil,
+	TokenCase, TokenDefault, TokenContinue, TokenIn, TokenUntil,
 	TokenSub, TokenScript,
+
+	TokenForever, TokenDo, TokenSpawn,
+	TokenAuto, TokenContext, TokenMain,
+	TokenYield, TokenCo, TokenCall, TokenArgument,
+	TokenAwait, TokenExit,
+	TokenMod, TokenThrows, TokenExtends,
+	TokenThrow, TokenTry, TokenCatch, TokenFinally,
+	TokenConstructor, TokenYeet,
+	TokenBranch,
+
 
 	TokenError, TokenEOF
 }
@@ -125,6 +136,10 @@ class Scanner {
 			case '/':
 				if (PeekNext() == '/') {
 					while (Peek() != '\n' && !IsAtEnd()) Advance();
+				} else if (PeekNext() == '*') {
+					while (!str.EndsWith("*/") && !IsAtEnd()) {
+						Advance();
+					}
 				} else {
 					return;
 				}
@@ -158,10 +173,32 @@ class Scanner {
 		case "continue": return .TokenContinue;
 		case "fallthrough": return .TokenFallthrough;
 		case "in": return .TokenIn;
-		case "times": return .TokenTimes;
 		case "script": return .TokenScript;
 		case "null": return .TokenNull;
 		case "static": return .TokenStatic;
+		case "spawn": return .TokenSpawn;
+		case "co": return .TokenCo;
+		case "yield": return .TokenYield;
+		case "context":  return .TokenContext;
+		case "call": return .TokenCall;
+		case "argument": return .TokenArgument;
+		case "yeet": return .TokenYeet;
+		case "try": return .TokenTry;
+		case "catch": return .TokenCatch;
+		case "throw":
+			if (Match('s')) { return .TokenThrows; }
+			return .TokenThrow;
+		case "finally": return .TokenFinally;
+		case "main": return .TokenMain;
+		case "extends": return .TokenExtends;
+		case "exit": return .TokenExit;
+		case "mod": return .TokenMod;
+		case "branch": return .TokenBranch;
+		case "forever": return .TokenForever;
+		case "await": return .TokenAwait;
+		case "auto": return .TokenAuto;
+		case "default": return .TokenDefault;
+		case "new": return .TokenNew;
 		}
 
 		return .TokenIdentifier;
@@ -219,7 +256,7 @@ class Scanner {
 		case ')': return MakeToken(.TokenRightParen);
 		case '{': return MakeToken(.TokenLeftBrace);
 		case '}': return MakeToken(.TokenRightBrace);
-		case ';': return MakeToken(.TokenSemiColon);
+		case ';': return MakeToken(.TokenSemicolon);
 		case ',': return MakeToken(.TokenComma);
 		case '.':
 			if (Match('.')) {
@@ -239,7 +276,7 @@ class Scanner {
 		case '>': return MakeToken(Match('=') ? .TokenGreaterEqual : .TokenGreater);
 		case '"': return String();
 		case '&': if (Match('&')) return MakeToken(.TokenAnd);
-		case '|': if (Match('|')) return MakeToken(.TokenOr);
+		case '|': if (Match('|')) { return MakeToken(.TokenOr); } else { return MakeToken(.TokenBar); }
 		case '?': return MakeToken(Match('?') ? .TokenCoalesce : (Match('.') ? .TokenNullAccessor : .TokenQuestion));
 		}
 

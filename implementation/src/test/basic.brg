@@ -1,5 +1,15 @@
-script main() {
+script program() {
 	show("Hello world!");
 
 	var x = 10;
+	show(x);
+
+	var a = new my_object(5, 3);
+	show(a.x);
+	var b = a do my_object(3, 4);
+	show(b.y);
+}
+
+script my_object(this.x, this.y) {
+	return this;
 }

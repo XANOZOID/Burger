@@ -251,17 +251,17 @@ script program() {
     co on_2nd_mod();
 }
 
-moddable branch script my_mod_script[failed_value](sendport) {
+mod branch script my_mod_script[failed_value](sendport) {
     // do work with failed_value
 }
 
-moddable branch script my_other_mod_script[failed_val](sendport) {
+mod branch script my_other_mod_script[failed_val](sendport) {
     // work with failed value
 }
 
 // Mod program
 
-mod script my_mod_1(sendport) extends program.my_mod_script {
+script my_mod_1(sendport) extends program.my_mod_script {
     var myport = new_port();
     port_send_message(sendport, myport);
     port_send_message(sendport, "libs");
@@ -275,7 +275,7 @@ mod script my_mod_1(sendport) extends program.my_mod_script {
     }
 }
 
-mod script my_mod_2(sendport) extends program.my_other_mod_script {
+script my_mod_2(sendport) extends program.my_other_mod_script {
     // . . . similar code as before
     if (mod_loaded()) {
         // do mod stuff
