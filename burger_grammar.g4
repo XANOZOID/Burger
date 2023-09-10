@@ -3,21 +3,21 @@ grammar burger_grammar;
 
 
 
-program: import_pattern* using_stat* export_stat* (signature | engine | enum_construct)* EOF;
+program: import_stat* using_stat* export_stat* (signature | engine | enum_construct)* EOF;
 
 ex_id: LSTRING | ID;
 import_pattern: LCURLY ID (AS ID)? RCURLY
               | LCURLY ID (AS ID)? (COMMA ID (AS ID)?)+ RCURLY 
               ;
-import_stat: IMPORT (MULT AS ID | ID | import_pattern) FROM ex_id SEMI;
+import_stat: IMPORT (MULT | ID (COMMA import_pattern)? | import_pattern) FROM ex_id SEMI;
 
-literal: primitive | NEW new_block? | larray | lmap;
+literal: primitive | NEW | larray | lmap;
 primitive: LBOOL | LNUM | LSTRING;
 lmap: LBRACKET LSTRING FATARROW expr RBRACKET
     | LBRACKET LSTRING FATARROW expr (COMMA LSTRING FATARROW expr)+ RBRACKET;
 
-enum_prefix: AUTO | CONST | UNIQUE;
-enum_element: ID (EQ  ( call_body | literal ))? SEMI;
+enum_prefix: AUTO;
+enum_element: DEFAULT? ID (EQ  expr)? SEMI;
 constructor: CONSTRUCTOR LPAREN ID COMMA ID RPAREN block;
 enum_construct: enum_prefix* ENUM ID LCURLY (enum_element | constructor)* RCURLY;
 
@@ -28,7 +28,7 @@ sig_id: ID | ID PERIOD ID;
 throw_id: (ID PERIOD)? ID PERIOD ID;
 signature_extends: EXTENDS sig_id ;
 signature_throws: THROWS throw_id | THROWS throw_id (COMMA throw_id)+;
-signature_prefix: (INLINE | BRANCH | MOD | EXPORT | BLOCK | YIELDS)* (FUN | MET) ID;
+signature_prefix: (INLINE | BRANCH | MOD | EXPORT | BLOCK | YIELDS)* (FUN | MET) ID (LBRACKET ID RBRACKET)?;
 sig_arg_id: ((THIS PERIOD)? ID | ID) (EQ primitive)?;
 signature_head: signature_prefix LPAREN sig_arg_id? (COMMA sig_arg_id)* (COMMA rest)? RPAREN signature_extends? signature_throws?;
 sig_tag: TAGID
@@ -60,16 +60,21 @@ stat: start_expr_block
     | start_expr SEMI 
     | block_expr 
     | VAR? destructure EQ expr SEMI
-    | THROW ID PERIOD ID COMMA expr
+    | VAR? destructure EQ block_expr
+    | CONTINUE SEMI
+    | BREAK LOOPID? SEMI
+    | STATIC ID EQ expr SEMI
+    | THROW ID PERIOD ID COMMA expr SEMI
     | EXIT expr SEMI
     | RETURN expr SEMI
-    | YEET obj_chain SEMI
-    | STATIC ID EQ expr SEMI
+    | REMOVE obj_chain SEMI
+    | LINK ID COMMA expr SEMI
+    | DISOWN expr SEMI
     ;
 
 
 block: LCURLY stat_list (expr SEMI)? RCURLY; 
-block_end_expr: (expr SEMI | block);
+block_end_expr: (stat | expr SEMI | block);
 new_block: LCURLY stat_list RCURLY;
 
 catch_group: LPAREN COMMA RPAREN
@@ -88,6 +93,9 @@ block_expr: block
   | LOOPID? FOREVER expr
   | TRY block_end_expr CATCH catch_group block_end_expr (FINALLY block_end_expr)?
   | switch_expr
+  | call_block_expr
+  | obj_chain COLON block_end_expr
+  | NEW new_block
   ;
  
 
@@ -110,22 +118,25 @@ switch_pattern: primitive | sw_obj_pattern | sw_arr_pattern;
 switch_stats: (stat | FALLTHROUGH SEMI)* (expr SEMI)?;
 switch_default: DEFAULT COLON switch_stats;
 switch_gaurd: IF LPAREN expr RPAREN ;
-switch_case: CASE switch_pattern (BAR switch_pattern)* switch_gaurd? COLON switch_stats;
+switch_case: CASE switch_pattern ((BAR | COMMA) switch_pattern)* switch_gaurd? COLON switch_stats;
 switch_group: switch_case*;
 switch_expr: SWITCH LPAREN expr RPAREN LCURLY switch_group switch_default? RCURLY;
 
 eqop: MODEQ | MEQ | SEQ | DEQ | EQ | PEQ | QQEQ;
-call_list: LPAREN (expr? | expr (COMMA expr)*) RPAREN;
-call_body: LPAREN expr RPAREN COLON id_chain call_list
-         | obj_chain COLON id_chain call_list
-         | NEW? id_chain call_list;
-call_expr: (ADDR? (CO | SPAWN))? call_body;
+call_list: LPAREN (expr? | expr (COMMA expr)*) (SPREADREST expr)? RPAREN
+         ;
+call_branch: LBRACKET expr RBRACKET;
+call_body: LPAREN expr RPAREN COLON id_chain call_branch? call_list
+         | obj_chain COLON id_chain call_branch? call_list
+         | NEW? id_chain call_branch? call_list;
+call_expr: (ADDR? (CO | SPAWN))? call_body
+         | call_expr (PERIOD id_chain)? COLON (LPAREN call_expr RPAREN | call_body);
+call_block_expr: call_expr block_end_expr;
 
 /*expressions which are allowed to start a statement*/
 start_expr: call_expr
-          | obj_chain eqop expr
           | VAR ID EQ expr
-          | obj_chain (SSUB | PPLUS) 
+          | obj_chain (SSUB | PPLUS | eqop expr)
           | block_expr
           | YIELD
           | AWAIT expr
@@ -148,9 +159,11 @@ expr: (EXCLAMATION | SUB) expr
     | expr QUESTION expr COLON expr
     | expr comparison expr
     | expr QQUESTION expr
+    | OWN expr
     | start_expr
     | block_expr
     | NEW new_block?
+    | expr COLON call_expr
     | expr ext_chain
     | obj_chain
     | expr LBRACKET expr RBRACKET /* dynamic accessor */
@@ -184,6 +197,10 @@ comparison: GTHEN | LTHEN | GETHEN | LETHEN | OR | AND | EQEQ | NEQ ;
 
 
 /***************LEXER***************/
+
+
+LOOPID: '&' [A-Z0-9_]+;
+
 EXTENDS: 'extends';
 THROWS: 'throws';
 YIELDS: 'yields';
@@ -242,6 +259,9 @@ DEQ: '/=';
 QQEQ: '??=';
 
 USING: 'using';
+LINK: 'link';
+OWN: 'own';
+DISOWN: 'disown';
 
 FUN: 'function';
 MET: 'method';
@@ -258,10 +278,12 @@ AWAIT: 'await';
 IN: 'in';
 EXIT: 'exit';
 RETURN: 'return';
+BREAK: 'break';
+CONTINUE: 'continue';
 FOREVER: 'forever';
 DO: 'do';
 UNTIL: 'until';
-YEET: 'yeet';
+REMOVE: 'remove';
 STATIC: 'static';
 ADDR: 'addr';
 TRY: 'try';
@@ -282,14 +304,12 @@ FALLTHROUGH: 'fallthrough';
 DEFAULT: 'default';
 UNDERSCORE: '_';
 
-
 LNUM: ('.' DIGIT+ | DIGIT+ ('.' DIGIT+)?);
 LBOOL: 'true' | 'false';
 
 fragment DIGIT: [0-9];
 fragment NAME: [a-zA-Z_][a-zA-Z_0-9]*; 
 TAGID: '@' NAME;
-LOOPID: '#' [A-Z] ':';
 ID: NAME ;
 WS: [ \t\n\r\f]+ -> skip ;
 COMMENT: '//' ~[\r\n]* -> skip;

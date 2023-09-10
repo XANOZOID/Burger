@@ -213,12 +213,15 @@ engine {
     tag name2(param);
 }
 
-```
 
 
-# Concurrency, Parallelism and Extra
+/**
+ * 
+ *  CONCURRENCY / WORKERS / EXTRA 
+ * 
+*/
 
-```js
+
 
 // import semantics
 import * from some_lib; // imports everything at the name level
@@ -406,7 +409,7 @@ method program() {
         }
 
     }
-    catch (_, _) {
+    catch (, ) {
         show("not my resource yet");
     }
 
@@ -429,7 +432,7 @@ method other(sendport) {
                 port_send_message(sendport, resource); // doesn't work
             }
         }
-        catch (_ , _) {
+        catch (,) {
             show("can't use resource anymore");
         }
 
@@ -462,25 +465,30 @@ method other(sendport) {
  * work indepedently of all of its libraries - but this will need to be considered later.
 */
 
-// Main program
 
+method on_first_mod() {
+    var mod_port = context.mod_port;
+    var myport = new_port();
+    // . . . more code for listening to my port . . .
+    forever {
+        var modfunc = port_read_message(mod_port);
+        co my_mod_script[modfunc](myport);
+    }
+}
+method on_2nd_mod() {
+    var mod_port_2 = context.mod_port_2;
+    forever {
+        var modfunc = port_read_message(mod_port_2);
+        spawn my_other_mod_script[modfunc](myport);
+    }
+}
+
+// Main program
 method program() {
-    var mod_port = new_mod_port(my_mod_script);
-    var mod_port_2 = new_mod_port(my_other_mod_script);
-    sub on_first_mod() {
-        var myport = new_port();
-        // . . . more code for listening to my port . . .
-        while (true) {
-            var modfunc = port_read_message(mod_port);
-            co my_mod_script[modfunc](myport);
-        }
-    }
-    sub on_2nd_mod() {
-        while (true) {
-            var modfunc = port_read_message(mod_port_2);
-            spawn my_other_mod_script[modfunc](myport);
-        }
-    }
+    context = new {
+        mod_port = new_mod_port(my_mod_script);
+        mod_port_2 = new_mod_port(my_other_mod_script);
+    };
     co on_first_mod();
     co on_2nd_mod();
 }
